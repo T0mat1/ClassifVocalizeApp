@@ -38,6 +38,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Calendar;
@@ -75,6 +77,9 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
   //trying to vocalize
   private Speaker speaker;
   private long lastRecognition = 0;
+
+  //Name of every class
+  private List<String> classes = new ArrayList<>();
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -136,6 +141,12 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
 
     cropToFrameTransform = new Matrix();
     frameToCropTransform.invert(cropToFrameTransform);
+
+    //Used to initialize the indexArray (which contains every class of imagenet, to build the characteristic vector)
+    List<Classifier.Recognition> results = classifier.recognizeImage(croppedBitmap);
+    for(Classifier.Recognition reco : results)
+      classes.add(reco.getTitle().toLowerCase());
+    Collections.sort(classes);
   }
 
   @Override
