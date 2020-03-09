@@ -253,11 +253,9 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
                                 //Trying to vocalize here
                                 String className = results.get(0).getTitle();
                                 long currentTime = Calendar.getInstance().getTimeInMillis();
-                                long dif = currentTime - lastRecognition;
-                                boolean difTrue = dif > 5000L;
-                                boolean confidenceOK = results.get(0).getConfidence() > 0.5;
-                                if(confidenceOK){
-                                  if(difTrue){
+                                long diffTime = currentTime - lastRecognition;
+                                if(results.get(0).getConfidence() > 0.5){
+                                  if(diffTime > 5000L){
                                     lastRecognition = currentTime;
                                     speaker.speak(className);
                                   }
