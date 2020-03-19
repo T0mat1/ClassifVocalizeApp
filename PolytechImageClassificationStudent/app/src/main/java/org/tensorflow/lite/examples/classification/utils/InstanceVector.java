@@ -1,10 +1,13 @@
 package org.tensorflow.lite.examples.classification.utils;
 
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Vector;
 
-public class InstanceVector {
+public class InstanceVector implements Serializable {
+
+    private static final long serialVersionUID = -5802571941999463497L;
 
     private static final int VECTOR_SIZE = 1001;
 
