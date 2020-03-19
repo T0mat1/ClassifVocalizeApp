@@ -50,6 +50,8 @@ import org.tensorflow.lite.examples.classification.tflite.Classifier;
 import org.tensorflow.lite.examples.classification.tflite.Classifier.Device;
 import org.tensorflow.lite.examples.classification.tflite.Classifier.Model;
 import org.tensorflow.lite.examples.classification.tflite.ClassifierFloatMobileNet;
+import org.tensorflow.lite.examples.classification.utils.EuclidianCalculator;
+import org.tensorflow.lite.examples.classification.utils.InstanceVector;
 import org.tensorflow.lite.examples.classification.utils.Speaker;
 
 public class ClassifierActivity extends CameraActivity implements OnImageAvailableListener {
@@ -80,6 +82,8 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
 
   //Name of every class
   private List<String> classes = new ArrayList<>();
+  //Every instance of class currently known
+  private List<InstanceVector> instances = new ArrayList<>();
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -147,6 +151,13 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
     for(Classifier.Recognition reco : results)
       classes.add(reco.getTitle().toLowerCase());
     Collections.sort(classes);
+
+    //Also initialize the instances List
+    for(int i=0; i < classes.size(); i++){
+      InstanceVector inst = new InstanceVector(classes.get(i));
+      inst.setVectorValue(i,1d);
+      instances.add(inst);
+    }
   }
 
   @Override
@@ -261,6 +272,18 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
                                 showRotationInfo(String.valueOf(sensorOrientation));
                                 showInference(lastProcessingTimeMs + "ms");
 
+                                //Build an InstanceVector
+                                InstanceVector instanceVector = new InstanceVector("unknown");
+                                int i = 0;
+                                while(results.get(i).getConfidence() > 0d){
+                                  instanceVector.setVectorValue(classes.indexOf(results.get(i).getTitle().toLowerCase()),
+                                          (double) results.get(i).getConfidence());
+                                  i++;
+                                }
+                                String instanceName = one_PPV(instanceVector);
+                                if(!instanceName.isEmpty())
+                                  instanceVector.setInstanceName(instanceName);
+
                                 //Trying to vocalize here
                                 String className = results.get(0).getTitle();
                                 long currentTime = Calendar.getInstance().getTimeInMillis();
@@ -366,4 +389,20 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
       LOGGER.e(e, "Failed to create classifier.");
     }
   }
+
+  private String one_PPV(InstanceVector unknownInstance){
+    String instanceClass = "";
+    double minDistance = Double.MAX_VALUE;
+
+    for(InstanceVector instance : instances){
+        double currentDistance = EuclidianCalculator.euclidianDistance(unknownInstance.getVector(),instance.getVector());
+        if(currentDistance < minDistance){
+          minDistance = currentDistance;
+          instanceClass = instance.getInstanceName();
+        }
+    }
+
+    return instanceClass;
+  }
+
 }
