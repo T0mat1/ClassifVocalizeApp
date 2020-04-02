@@ -43,6 +43,8 @@ import java.util.Collections;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Calendar;
+import java.util.Vector;
+
 import org.tensorflow.lite.examples.classification.env.BorderedText;
 import org.tensorflow.lite.examples.classification.env.ImageUtils;
 import org.tensorflow.lite.examples.classification.env.Logger;
@@ -265,13 +267,6 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
                               @Override
                               public void run() {
 
-                                showResultsInBottomSheet(results);
-                                showFrameInfo(previewWidth + "x" + previewHeight);
-                                showCropInfo(cropCopyBitmap.getWidth() + "x" + cropCopyBitmap.getHeight());
-                                showCameraResolution(canvas.getWidth() + "x" + canvas.getHeight());
-                                showRotationInfo(String.valueOf(sensorOrientation));
-                                showInference(lastProcessingTimeMs + "ms");
-
                                 //Build an InstanceVector
                                 InstanceVector instanceVector = new InstanceVector("unknown");
                                 int i = 0;
@@ -284,16 +279,26 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
                                 if(!instanceName.isEmpty())
                                   instanceVector.setInstanceName(instanceName);
 
+                                Classifier.Recognition reco = new Classifier.Recognition(instanceName, instanceName, 1f, null);
+                                results.add(0, reco);
+
+                                showResultsInBottomSheet(results);
+                                showFrameInfo(previewWidth + "x" + previewHeight);
+                                showCropInfo(cropCopyBitmap.getWidth() + "x" + cropCopyBitmap.getHeight());
+                                showCameraResolution(canvas.getWidth() + "x" + canvas.getHeight());
+                                showRotationInfo(String.valueOf(sensorOrientation));
+                                showInference(lastProcessingTimeMs + "ms");
+
                                 //Trying to vocalize here
-                                String className = results.get(0).getTitle();
+                                String className = instanceVector.getInstanceName();
                                 long currentTime = Calendar.getInstance().getTimeInMillis();
                                 long diffTime = currentTime - lastRecognition;
-                                if(results.get(0).getConfidence() > 0.5){
+                                //if(results.get(0).getConfidence() > 0.5){
                                   if(diffTime > 5000L){
                                     lastRecognition = currentTime;
                                     speaker.speak(className);
                                   }
-                                }
+                                //}
                               }
                             });
                   }
