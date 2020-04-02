@@ -27,13 +27,14 @@
         android:orientation="vertical">
 
 
-        <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:tools="http://schemas.android.com/tools"
+        <FrameLayout
             android:id="@+id/container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@android:color/black"
-            tools:context="org.tensorflow.lite.examples.classification.CameraActivity" />
+            tools:context="org.tensorflow.lite.examples.classification.CameraActivity" >
+
+        </FrameLayout>
 
 
         <androidx.appcompat.widget.Toolbar
@@ -49,6 +50,19 @@
 
         </androidx.appcompat.widget.Toolbar>
 
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/takePictureButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/toolbar"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="false"
+            android:layout_centerHorizontal="true"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="10dp"
+            android:clickable="true"
+            app:srcCompat="@android:drawable/ic_menu_camera" />
 
 
     </RelativeLayout>

@@ -16,6 +16,9 @@
 
 package org.tensorflow.lite.examples.classification;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
@@ -32,11 +35,20 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.util.Size;
 import android.util.TypedValue;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
+import java.io.EOFException;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,7 +68,11 @@ import org.tensorflow.lite.examples.classification.utils.EuclidianCalculator;
 import org.tensorflow.lite.examples.classification.utils.InstanceVector;
 import org.tensorflow.lite.examples.classification.utils.Speaker;
 
-public class ClassifierActivity extends CameraActivity implements OnImageAvailableListener {
+import javax.crypto.interfaces.PBEKey;
+
+import androidx.fragment.app.DialogFragment;
+
+public class ClassifierActivity extends CameraActivity implements OnImageAvailableListener, View.OnClickListener {
   private static final Logger LOGGER = new Logger();
   private static final boolean MAINTAIN_ASPECT = true;
   private static final Size DESIRED_PREVIEW_SIZE = new Size(640, 480);
@@ -87,11 +103,34 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
   private List<String> classes = new ArrayList<>();
   //Every instance of class currently known
   private List<InstanceVector> instances = new ArrayList<>();
+  //New instance vector being create
+  private InstanceVector currentNewInstanceVector;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     speaker = new Speaker(this);
+
+    takePictureButton.setOnClickListener(this);
+
+    File savedInstance = new File(getFilesDir(),"instances");
+
+    try {
+      FileInputStream fileInputStream = new FileInputStream(savedInstance);
+      ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+
+      for(;;){
+        instances.add((InstanceVector) objectInputStream.readObject());
+      }
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch(EOFException e){
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
+    }
   }
 
   @Override
@@ -421,5 +460,53 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
 
     return instanceClass;
   }
+
+    @Override
+    public void onClick(View v) {
+        if(v.getId() == R.id.takePictureButton && classifier != null){
+            final List<Classifier.Recognition> results = classifier.recognizeImage(croppedBitmap);
+
+            //Build an InstanceVector
+            InstanceVector instanceVector = new InstanceVector("unknown");
+
+            int i = 0;
+            while(results.get(i).getConfidence() > 0d){
+              instanceVector.setVectorValue(classes.indexOf(results.get(i).getTitle().toLowerCase()),
+                      (double) results.get(i).getConfidence());
+              i++;
+            }
+
+            currentNewInstanceVector = instanceVector;
+
+            InstanceNameFragment frag = new InstanceNameFragment();
+            frag.show(getSupportFragmentManager(),"instanceName");
+        }
+    }
+
+    public void doPositiveClick(String instanceName){
+      InstanceVector instanceVector = currentNewInstanceVector;
+      instanceVector.setInstanceName(instanceName);
+
+      instances.add(instanceVector);
+
+      File savedInstance = new File(getFilesDir(),"instances");
+      try {
+        FileOutputStream fileOutputStream = new FileOutputStream(savedInstance);
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
+
+        objectOutputStream.writeObject(instanceVector);
+
+        objectOutputStream.close();
+        fileOutputStream.close();
+
+        Toast.makeText(this,"Instance " + instanceName + " added to database",Toast.LENGTH_SHORT).show();
+      } catch (FileNotFoundException e) {
+        e.printStackTrace();
+        Toast.makeText(this,"There was an error during instance saving",Toast.LENGTH_SHORT).show();
+      } catch (IOException e) {
+        e.printStackTrace();
+        Toast.makeText(this,"There was an error during instance saving",Toast.LENGTH_SHORT).show();
+      }
+    }
 
 }

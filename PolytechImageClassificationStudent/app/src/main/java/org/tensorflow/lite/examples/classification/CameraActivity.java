@@ -38,6 +38,8 @@ import android.os.Trace;
 import androidx.annotation.NonNull;
 import androidx.annotation.UiThread;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -50,6 +52,7 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -120,6 +123,7 @@ public abstract class CameraActivity extends AppCompatActivity
   private MenuItem mtrain;
   private MenuItem mclassify;
   public Toolbar toolbar;
+  protected FloatingActionButton takePictureButton;
 
   @Override
   protected void onCreate(final Bundle savedInstanceState) {
@@ -147,6 +151,7 @@ public abstract class CameraActivity extends AppCompatActivity
     gestureLayout = findViewById(R.id.gesture_layout);
     sheetBehavior = BottomSheetBehavior.from(bottomSheetLayout);
     bottomSheetArrowImageView = findViewById(R.id.bottom_sheet_arrow);
+    takePictureButton = findViewById(R.id.takePictureButton);
 
     ViewTreeObserver vto = gestureLayout.getViewTreeObserver();
     vto.addOnGlobalLayoutListener(
