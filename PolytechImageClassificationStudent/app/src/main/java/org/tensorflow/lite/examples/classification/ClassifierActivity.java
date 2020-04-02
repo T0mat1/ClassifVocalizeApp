@@ -81,6 +81,7 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
   //trying to vocalize
   private Speaker speaker;
   private long lastRecognition = 0;
+  private long lastRecoTime = 0;
 
   //Name of every class
   private List<String> classes = new ArrayList<>();
@@ -267,38 +268,49 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
                               @Override
                               public void run() {
 
-                                //Build an InstanceVector
-                                InstanceVector instanceVector = new InstanceVector("unknown");
-                                int i = 0;
-                                while(results.get(i).getConfidence() > 0d){
-                                  instanceVector.setVectorValue(classes.indexOf(results.get(i).getTitle().toLowerCase()),
-                                          (double) results.get(i).getConfidence());
-                                  i++;
-                                }
-                                String instanceName = one_PPV(instanceVector);
-                                if(!instanceName.isEmpty())
-                                  instanceVector.setInstanceName(instanceName);
+                                String className;
 
-                                Classifier.Recognition reco = new Classifier.Recognition(instanceName, instanceName, 1f, null);
-                                results.add(0, reco);
-
-                                showResultsInBottomSheet(results);
                                 showFrameInfo(previewWidth + "x" + previewHeight);
                                 showCropInfo(cropCopyBitmap.getWidth() + "x" + cropCopyBitmap.getHeight());
                                 showCameraResolution(canvas.getWidth() + "x" + canvas.getHeight());
                                 showRotationInfo(String.valueOf(sensorOrientation));
                                 showInference(lastProcessingTimeMs + "ms");
 
-                                //Trying to vocalize here
-                                String className = instanceVector.getInstanceName();
+
                                 long currentTime = Calendar.getInstance().getTimeInMillis();
                                 long diffTime = currentTime - lastRecognition;
-                                //if(results.get(0).getConfidence() > 0.5){
-                                  if(diffTime > 5000L){
-                                    lastRecognition = currentTime;
+                                long diffTimeSpeak = currentTime - lastRecoTime;
+                                if(diffTime > 1000L){
+
+                                  lastRecognition = currentTime;
+
+                                  //Build an InstanceVector
+                                  InstanceVector instanceVector = new InstanceVector("unknown");
+
+                                  int i = 0;
+                                  while(results.get(i).getConfidence() > 0d){
+                                    instanceVector.setVectorValue(classes.indexOf(results.get(i).getTitle().toLowerCase()),
+                                            (double) results.get(i).getConfidence());
+                                    i++;
+                                  }
+                                  String instanceName = one_PPV(instanceVector);
+                                  if(!instanceName.isEmpty())
+                                    instanceVector.setInstanceName(instanceName);
+
+                                  Classifier.Recognition reco = new Classifier.Recognition(instanceName, instanceName, 1f, null);
+                                  results.add(0, reco);
+
+                                  showResultsInBottomSheet(results);
+
+                                  if(diffTimeSpeak > 5000L){
+                                    lastRecoTime = currentTime;
+                                    //Trying to vocalize here
+                                    className = instanceVector.getInstanceName();
                                     speaker.speak(className);
                                   }
-                                //}
+
+                                }
+
                               }
                             });
                   }
