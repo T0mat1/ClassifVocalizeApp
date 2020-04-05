@@ -52,9 +52,11 @@ import java.io.ObjectOutputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Calendar;
+import java.util.Set;
 import java.util.Vector;
 
 import org.tensorflow.lite.examples.classification.env.BorderedText;
@@ -103,6 +105,8 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
   private List<String> classes = new ArrayList<>();
   //Every instance of class currently known
   private List<InstanceVector> instances = new ArrayList<>();
+  //Every custom instance
+  private Set<InstanceVector> customInstances = new HashSet<>();
   //New instance vector being create
   private InstanceVector currentNewInstanceVector;
 
@@ -119,9 +123,10 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
       FileInputStream fileInputStream = new FileInputStream(savedInstance);
       ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
 
-      for(;;){
-        instances.add((InstanceVector) objectInputStream.readObject());
-      }
+      customInstances = (Set<InstanceVector>) objectInputStream.readObject();
+
+      for(InstanceVector iv : customInstances)
+        instances.add(iv);
     } catch (FileNotFoundException e) {
       e.printStackTrace();
     } catch(EOFException e){
@@ -488,13 +493,14 @@ public class ClassifierActivity extends CameraActivity implements OnImageAvailab
       instanceVector.setInstanceName(instanceName);
 
       instances.add(instanceVector);
+      customInstances.add(instanceVector);
 
       File savedInstance = new File(getFilesDir(),"instances");
       try {
         FileOutputStream fileOutputStream = new FileOutputStream(savedInstance);
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
 
-        objectOutputStream.writeObject(instanceVector);
+        objectOutputStream.writeObject(customInstances);
 
         objectOutputStream.close();
         fileOutputStream.close();
